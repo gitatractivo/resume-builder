@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 92.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 8%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 6%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 8%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 8%;
+    --input: 240 3.7% 8%;
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Ensure A4 page when printing */
+@page {
+  size: 210mm 297mm;
+  margin: 0;
+}
+
+/* Print styles for PDF generation */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-a4 {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+  }
+
+  .print-a4 a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Ensure consistent styling for PDF generation */
+.print-a4 {
+  background: white;
+  color: black;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Chip/pill styling to render correctly in print */
+.print-a4 .chip {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  padding: 0.125rem 0.5rem; /* ~py-0.5 px-2 */
+  border-radius: 0.25rem; /* ~rounded */
+  background-color: #f1f5f9; /* fixed light gray, theme-agnostic */
+  color: #111827;
+}
+
+.print-a4 a {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.print-a4 a:hover {
+  color: #1d4ed8;
+}
+
+/* Ensure proper spacing for skills groups */
+.print-a4 .space-y-3 > div {
+  margin-bottom: 0.75rem !important;
+}
+.print-a4 .space-y-3 > div:last-child {
+  margin-bottom: 0 !important;
+}
+.print-a4 .mb-3 {
+  margin-bottom: 0.75rem !important;
+}
+.print-a4 .mb-1 {
+  margin-bottom: 0.25rem !important;
+}
+
+/* Ensure links are properly styled and clickable */
+.print-a4 a[href] {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+.dark ::selection {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+
+::view-transition-group(root) {
+  animation-duration: 0.7s;
+  animation-timing-function: cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+::view-transition-new(root) {
+  animation-name: reveal-light;
+}
+::view-transition-old(root),
+.dark::view-transition-old(root) {
+  animation: none;
+  z-index: -1;
+}
+.dark::view-transition-new(root) {
+  animation-name: reveal-dark;
+}
+
+@keyframes reveal-dark {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes reveal-light {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+* {
+  user-select: none;
+}
