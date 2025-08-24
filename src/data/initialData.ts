@@ -26,11 +26,17 @@ export type GroupedSection = SectionBase & {
 
 export type TimelineItem = {
   heading: string; // e.g. Company / Project / Degree
-  subheading?: string; // role / brief
+  subheading?: string; // role / brief (deprecated, use positions instead)
   start?: string;
   end?: string;
   bullets?: string[];
   meta?: string;
+  positions?: {
+    title: string;
+    start?: string;
+    end?: string;
+    bullets?: string[];
+  }[];
 };
 
 export type TimelineSection = SectionBase & {
@@ -83,7 +89,7 @@ export const initialData: ResumeData = {
     {
       key: "summary",
       title: "Summary",
-      placement: "right",
+      placement: "left",
       order: 1,
       type: "rich",
       content:
@@ -120,12 +126,25 @@ export const initialData: ResumeData = {
       items: [
         {
           heading: "A.P. Moller Maersk",
-          subheading: "Associate Software Engineer — Java Microservices, Azure",
-          start: "Jul 2024",
-          end: "Jun 2025",
-          bullets: [
-            "Developed & deployed APIs used daily by logistics users; ensured HA & scalability on Azure.",
-            "Implemented monitoring with Azure Monitor & App Insights; improved reliability KPIs.",
+          positions: [
+            {
+              title: "Associate Software Engineer — Java Microservices, Azure",
+              start: "Jul 2024",
+              end: "Present",
+              bullets: [
+                "Developed & deployed APIs used daily by logistics users; ensured HA & scalability on Azure.",
+                "Implemented monitoring with Azure Monitor & App Insights; improved reliability KPIs.",
+              ],
+            },
+            {
+              title: "Software Engineer Intern — Java, Spring Boot, Azure",
+              start: "Jan 2024",
+              end: "Jun 2024",
+              bullets: [
+                "Built microservices for internal logistics platform; deployed on Azure Kubernetes Service.",
+                "Collaborated with senior engineers on code reviews and best practices.",
+              ],
+            },
           ],
         },
         {

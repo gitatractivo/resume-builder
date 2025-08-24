@@ -1,6 +1,8 @@
 import { forwardRef, memo } from "react";
 import type { ResumeData, Section } from "@/data/initialData";
 import { cn } from "@/lib/utils";
+import { useScrollGradient } from "@/hooks/useScrollGradient";
+// import { Separator } from "@radix-ui/react-select";
 
 function SectionBlock({ section }: { section: Section }) {
   return (
@@ -37,21 +39,56 @@ function SectionBlock({ section }: { section: Section }) {
           {section.items.map((it, idx) => (
             <div key={idx}>
               <div className="text-[0.95rem] font-medium">{it.heading}</div>
-              {it.subheading && (
-                <div className="text-sm text-neutral-700">{it.subheading}</div>
+              {it.meta && (
+                <div className="text-xs text-neutral-500">{it.meta}</div>
               )}
-              {(it.start || it.end || it.meta) && (
-                <div className="text-xs text-neutral-500">
-                  {[it.start, it.end].filter(Boolean).join(" — ")}{" "}
-                  {it.meta ? `• ${it.meta}` : ""}
-                </div>
-              )}
-              {it.bullets && it.bullets.length > 0 && (
-                <ul className="list-disc ml-5 text-sm leading-5">
-                  {it.bullets.map((b, i2) => (
-                    <li key={i2}>{b}</li>
+
+              {/* Render positions if available */}
+              {it.positions && it.positions.length > 0 ? (
+                <div className="space-y-2">
+                  {it.positions.map((position, posIdx) => (
+                    <div key={posIdx} className="ml-2">
+                      <div className="text-sm text-neutral-700">
+                        {position.title}
+                      </div>
+                      {(position.start || position.end) && (
+                        <div className="text-xs text-neutral-500">
+                          {[position.start, position.end]
+                            .filter(Boolean)
+                            .join(" — ")}
+                        </div>
+                      )}
+                      {position.bullets && position.bullets.length > 0 && (
+                        <ul className="list-disc ml-5 text-sm leading-5">
+                          {position.bullets.map((b, i2) => (
+                            <li key={i2}>{b}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
+              ) : (
+                /* Fallback to old format for backward compatibility */
+                <>
+                  {it.subheading && (
+                    <div className="text-sm text-neutral-700">
+                      {it.subheading}
+                    </div>
+                  )}
+                  {(it.start || it.end) && (
+                    <div className="text-xs text-neutral-500">
+                      {[it.start, it.end].filter(Boolean).join(" — ")}
+                    </div>
+                  )}
+                  {it.bullets && it.bullets.length > 0 && (
+                    <ul className="list-disc ml-5 text-sm leading-5">
+                      {it.bullets.map((b, i2) => (
+                        <li key={i2}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </div>
           ))}
@@ -64,6 +101,9 @@ function SectionBlock({ section }: { section: Section }) {
 type PreviewProps = { data: ResumeData };
 const ResumePreview = memo(
   forwardRef<HTMLElement, PreviewProps>(function Preview({ data }, ref) {
+    const { showTopGradient, showBottomGradient, scrollRef } =
+      useScrollGradient();
+
     const left = data.sections
       .filter((s) => s.placement === "left")
       .sort((a, b) => a.order - b.order);
@@ -84,15 +124,18 @@ const ResumePreview = memo(
     };
 
     return (
-      <div className="w-full h-full flex items-center justify-center overflow-auto">
+      <div
+        ref={scrollRef as React.RefObject<HTMLDivElement>}
+        className="w-full h-full flex items-center justify-center overflow-auto relative"
+      >
         <article
           ref={ref}
           className={cn(
-            "print-a4 bg-white text-black shadow-lg",
+            "print-a4 flex flex-col bg-white text-black shadow-lg",
             "w-[210mm] h-[297mm]",
-            "p-6 sm:p-8 md:p-10",
+            "p-0",
             "transform transition-transform duration-200",
-            "flex-shrink-0"
+            "flex-shrink-0 h-full "
           )}
           style={{
             aspectRatio: "210/297",
@@ -100,9 +143,8 @@ const ResumePreview = memo(
             lineHeight: "1.4",
           }}
         >
-          {/* Header */}
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold leading-tight">
+          <header className=" mb-3 px-6 py-6 bg-zinc-300 ">
+            <h1 className="text-4xl font-bold leading-tight">
               {data.meta.fullName}
             </h1>
             <div className="text-sm text-neutral-700">{data.meta.title}</div>
@@ -132,25 +174,48 @@ const ResumePreview = memo(
             </div>
           </header>
 
-          {/* 2 Columns */}
           <div
-            className="grid gap-6"
-            style={{
-              gridTemplateColumns: `${data.layout.leftWidth}% ${data.layout.rightWidth}%`,
-            }}
+            className="flex gap-6 flex-1 box-border"
+            // style={{
+            //   gridTemplateColumns: `${data.layout.leftWidth}% ${data.layout.rightWidth}%`,
+            // }}
           >
-            <div className="space-y-4">
+            <div
+              className="space-y-4 p-4 bg-zinc-300"
+              style={{
+                width: `${data.layout.leftWidth}%`,
+              }}
+            >
               {left.map((s) => (
                 <SectionBlock key={s.key} section={s} />
               ))}
             </div>
-            <div className="space-y-4">
+            <div
+              className="space-y-4 box-border flex-1 py-4 "
+              style={{
+                width: `${data.layout.rightWidth}%`,
+              }}
+            >
               {right.map((s) => (
                 <SectionBlock key={s.key} section={s} />
               ))}
             </div>
           </div>
         </article>
+
+        {/* Gradient overlays for fade effect with smooth transitions */}
+        <div
+          className={cn(
+            "absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-background to-transparent pointer-events-none z-10 transition-opacity duration-300",
+            showTopGradient ? "opacity-100" : "opacity-0"
+          )}
+        />
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none z-10 transition-opacity duration-300",
+            showBottomGradient ? "opacity-100" : "opacity-0"
+          )}
+        />
       </div>
     );
   })

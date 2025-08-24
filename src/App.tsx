@@ -57,18 +57,18 @@ export default function App() {
       <div className="flex pt-14 h-full overflow-y-scroll  ">
         {/* Sidebar */}
         <div
-          className={`z-20 h-fit overflow-y-scroll bg-background p-4 transition-all duration-300 ${
+          className={`z-20 h-fit overflow-y-scroll  bg-muted transition-all duration-300 ${
             showSidebar
-              ? "w-64 translate-x-0"
-              : "w-64 -translate-x-full lg:translate-x-0 lg:w-0"
+              ? "w-96  translate-x-0"
+              : "w-96   -translate-x-full lg:translate-x-0 lg:w-0"
           }`}
         >
           {/* Form */}
           <div
-            className={`transition-all flex flex-col box-border space-y-2 h-full overflow-y-scroll duration-300 w-full max-w-full ${
+            className={`transition-all flex p-4 flex-col box-border space-y-2 h-full overflow-y-scroll duration-300 w-full max-w-full ${
               showSidebar ? "block" : "hidden"
             }`}
-            style={{ boxSizing: 'border-box' }}
+            
           >
             <ThemeSwitch />
             <ResumeForm value={data} onChange={onChange} />
@@ -78,7 +78,7 @@ export default function App() {
         </div>
 
         {/* Main content */}
-        <div className=" flex flex-col h-full w-full overflow-y-scroll">
+        <div className=" flex flex-col h-full flex-1 overflow-y-scroll">
           {/* Mobile form overlay */}
           {/* <div
             className={`lg:hidden fixed inset-0 z-10 bg-background/80 backdrop-blur-sm transition-all duration-300 ${
