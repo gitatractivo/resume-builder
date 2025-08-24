@@ -57,6 +57,7 @@ export type ResumeData = {
     rightWidth: number; // 68
   };
   sections: Section[];
+  invisibleKeywords?: string[]; // ATS-visible keywords that are invisible to humans
 };
 
 export const initialData: ResumeData = {
@@ -195,5 +196,28 @@ export const initialData: ResumeData = {
         },
       ],
     },
+  ],
+  invisibleKeywords: [
+    "JavaScript", "Python", "Java", "C++", "C#", "PHP", "Ruby", "Swift", "Kotlin", "Rust",
+    "HTML", "CSS", "SASS", "SCSS", "Less", "Bootstrap", "Material-UI", "Ant Design",
+    "Redux", "Vue.js", "Angular", "Svelte", "jQuery", "Lodash", "Axios", "Fetch API",
+    "REST API", "SOAP", "gRPC", "WebSocket", "Socket.io", "JWT", "OAuth", "OpenID",
+    "MySQL", "Redis", "Elasticsearch", "Cassandra", "DynamoDB", "Firebase", "Supabase",
+    "Git", "SVN", "Bitbucket", "GitLab", "Jenkins", "GitHub Actions", "CircleCI", "Travis CI",
+    "Linux", "Unix", "Windows", "macOS", "Ubuntu", "CentOS", "Debian",
+    "Microservices", "Monolith", "Serverless", "API Gateway", "Load Balancer", "CDN",
+    "Agile", "Scrum", "Kanban", "Waterfall", "TDD", "BDD", "DDD", "SOLID", "DRY",
+    "Machine Learning", "AI", "Deep Learning", "Neural Networks", "TensorFlow", "PyTorch",
+    "Data Science", "Big Data", "Hadoop", "Spark", "Kafka", "RabbitMQ", "SQS",
+    "Security", "Authentication", "Authorization", "Encryption", "SSL", "TLS", "HTTPS",
+    "Performance", "Optimization", "Caching", "CDN", "Load Testing", "Stress Testing",
+    "Monitoring", "Logging", "Alerting", "Metrics", "Dashboard", "Analytics",
+    "Mobile Development", "React Native", "Flutter", "Ionic", "Cordova", "Progressive Web App",
+    "Cloud Computing", "Virtualization", "Containerization", "Orchestration", "Service Mesh",
+    "Blockchain", "Cryptocurrency", "Smart Contracts", "Web3", "DeFi", "NFT",
+    "DevOps", "Site Reliability Engineering", "Infrastructure as Code", "Configuration Management",
+    "Testing", "Unit Testing", "Integration Testing", "End-to-End Testing", "Manual Testing",
+    "Project Management", "Team Leadership", "Mentoring", "Code Review", "Technical Documentation",
+    "Problem Solving", "Critical Thinking", "Analytical Skills", "Communication", "Collaboration"
   ],
 };

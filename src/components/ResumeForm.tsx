@@ -98,6 +98,7 @@ const schema = z.object({
     rightWidth: z.number().min(50).max(80),
   }),
   sections: z.array(sectionSchema),
+  invisibleKeywords: z.array(z.string()).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -815,6 +816,56 @@ export default function ResumeForm({ value, onChange }: Props) {
                     })}
                     placeholder="70"
                   />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Invisible Keywords Section */}
+          <AccordionItem value="keywords" className="border rounded-lg">
+            <AccordionTrigger className="px-4">
+              <span className="font-semibold">ATS Keywords (Invisible)</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Add keywords that ATS systems can detect but are invisible to human readers. 
+                  These help improve resume parsing and matching.
+                </p>
+                <div className="space-y-2">
+                  {(form.watch("invisibleKeywords") || []).map((keyword, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input
+                        {...form.register(`invisibleKeywords.${idx}`)}
+                        placeholder="Enter keyword (e.g., JavaScript, Python, Agile)"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          const keywords = form.getValues("invisibleKeywords") || [];
+                          keywords.splice(idx, 1);
+                          form.setValue("invisibleKeywords", keywords);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      const keywords = form.getValues("invisibleKeywords") || [];
+                      form.setValue("invisibleKeywords", [...keywords, ""]);
+                    }}
+                    className="w-full"
+                  >
+                    + Add Keyword
+                  </Button>
                 </div>
               </div>
             </AccordionContent>

@@ -12,7 +12,7 @@ export default function PdfDownloadButton({
 }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const printStylesRef = useRef<HTMLStyleElement | null>(null);
-  const originalStylesRef = useRef<string>("");
+  // const originalStylesRef = useRef<string>("");
 
   // Method 1: Same page print with body replacement
   const printOnSamePage = useCallback(() => {
@@ -170,7 +170,7 @@ export default function PdfDownloadButton({
           }
         } catch (e) {
           // Skip if can't access stylesheet (CORS)
-          console.warn("Could not access stylesheet:", sheet);
+          console.warn("Could not access stylesheet:", sheet,e);
         }
       });
 

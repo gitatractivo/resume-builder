@@ -143,7 +143,7 @@ const ResumePreview = memo(
             lineHeight: "1.4",
           }}
         >
-          <header className=" mb-3 px-6 py-6 bg-zinc-300 ">
+          <header className="relative mb-3 px-6 py-6 bg-zinc-300 ">
             <h1 className="text-4xl font-bold leading-tight">
               {data.meta.fullName}
             </h1>
@@ -172,6 +172,21 @@ const ResumePreview = memo(
                 </a>
               ))}
             </div>
+            <div className="absolute w-40 top-0 right-0 text-zinc-300">
+              {data.invisibleKeywords && data.invisibleKeywords.length > 0 && (
+                <div
+                  className="   select-none pointer-events-none"
+                  style={{
+                    fontSize: "5px",
+                    lineHeight: "4px",
+      
+                  }}
+                  aria-hidden="true"
+                >
+                  {data.invisibleKeywords.join(" ")}
+                </div>
+              )}
+            </div>
           </header>
 
           <div
@@ -199,6 +214,8 @@ const ResumePreview = memo(
               {right.map((s) => (
                 <SectionBlock key={s.key} section={s} />
               ))}
+
+              {/* Invisible keywords for ATS - positioned in empty space */}
             </div>
           </div>
         </article>
