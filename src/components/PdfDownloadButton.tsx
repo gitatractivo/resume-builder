@@ -1,157 +1,322 @@
 import { Button } from "@/components/ui/button";
-import { useCallback, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useCallback, useRef, useState } from "react";
 
-type Props = { targetRef: React.RefObject<HTMLElement> };
+type Props = {
+  targetRef: React.RefObject<HTMLElement>;
+  fileName?: string;
+};
 
-export default function PdfDownloadButton({ targetRef }: Props) {
-  const didErrorRef = useRef(false);
+export default function PdfDownloadButton({
+  targetRef,
+  fileName = "resume",
+}: Props) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const printStylesRef = useRef<HTMLStyleElement | null>(null);
+  const originalStylesRef = useRef<string>("");
 
-  const openWindowPrint = useCallback(() => {
+  // Method 1: Same page print with body replacement
+  const printOnSamePage = useCallback(() => {
     const node = targetRef.current;
     if (!node) return false;
+
+    setIsProcessing(true);
 
     try {
-      const styles = Array.from(
-        document.querySelectorAll('link[rel="stylesheet"], style')
-      )
-        .map((el) => el.outerHTML)
-        .join("\n");
+      // Store current state
+      const originalTitle = document.title;
+      const originalBodyContent = document.body.innerHTML;
+      const originalBodyClass = document.body.className;
 
-      const win = window.open("", "_blank");
-      if (!win) return false;
+      // Set document title for PDF filename
+      document.title = fileName;
+      document.head.title = fileName;
 
-      const doc = win.document;
-      doc.open();
-      doc.write(`<!doctype html><html><head>
-        <base href="${location.origin}${location.pathname}">
-        ${styles}
-        <style>@page{size:210mm 297mm;margin:0}</style>
-      </head><body>
-        ${node.outerHTML}
-      </body></html>`);
-      doc.close();
-
-      const doPrint = () => {
-        try {
-          win.focus();
-          win.print();
-
-        } finally {
-          setTimeout(() => {
-            try {
-              // win.close();
-            } catch (e) {
-              // catch error if window is already closed
-              console.log("Failed to close window", e);
-            }
-          }, 1000);
+      // Create print-specific styles
+      const printStyles = document.createElement("style");
+      printStyles.textContent = `
+        @media print {
+          @page { 
+            size: A4; 
+            margin: 0; 
+          }
+          
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            font-family: system-ui, -apple-system, sans-serif !important;
+          }
+          
+          /* Ensure backgrounds and colors print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          /* Hide no-print elements */
+          .no-print {
+            display: none !important;
+          }
         }
+        
+        @media screen {
+          /* Styles for print preview */
+          body.print-preview {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+          }
+        }
+      `;
+
+      document.head.appendChild(printStyles);
+      printStylesRef.current = printStyles;
+
+      // Replace body content with just the resume
+      document.body.innerHTML = node.outerHTML;
+      document.body.className = "print-preview";
+
+      // Trigger print dialog
+      window.print();
+
+      // Cleanup function
+      const cleanup = () => {
+        // Restore original content
+        document.body.innerHTML = originalBodyContent;
+        document.body.className = originalBodyClass;
+        document.title = originalTitle;
+
+        // Remove print styles
+        if (
+          printStylesRef.current &&
+          document.head.contains(printStylesRef.current)
+        ) {
+          document.head.removeChild(printStylesRef.current);
+          printStylesRef.current = null;
+        }
+
+        setIsProcessing(false);
       };
 
-      // Wait briefly for resources to paint
-      setTimeout(doPrint, 400);
+      // Listen for print completion
+      const handleAfterPrint = () => {
+        cleanup();
+        window.removeEventListener("afterprint", handleAfterPrint);
+        window.removeEventListener("beforeprint", handleBeforePrint);
+      };
+
+      const handleBeforePrint = () => {
+        // Ensure the content is ready for printing
+        document.body.className = "";
+      };
+
+      window.addEventListener("afterprint", handleAfterPrint);
+      window.addEventListener("beforeprint", handleBeforePrint);
+
+      // Fallback cleanup
+      setTimeout(cleanup, 10000);
+
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Same page print failed:", error);
+      setIsProcessing(false);
       return false;
     }
-  }, [targetRef]);
+  }, [targetRef, fileName]);
 
-  const fallbackIframePrint = useCallback(() => {
+  // Method 2: Hidden iframe with better content handling
+  const printWithHiddenIframe = useCallback(() => {
     const node = targetRef.current;
     if (!node) return false;
+
+    setIsProcessing(true);
 
     try {
       const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
+      iframe.style.cssText = `
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 210mm;
+        height: 297mm;
+        border: 0;
+      `;
       document.body.appendChild(iframe);
 
-      const doc = iframe.contentWindow?.document;
-      if (!doc) return false;
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        document.body.removeChild(iframe);
+        setIsProcessing(false);
+        return false;
+      }
 
-      const styles = Array.from(
-        document.querySelectorAll('link[rel="stylesheet"], style')
-      )
-        .map((el) => el.outerHTML)
-        .join("\n");
+      // Get current page styles
+      const styleSheets = Array.from(document.styleSheets);
+      let allStyles = "";
 
-      doc.open();
-      doc.write(`<!doctype html><html><head>${styles}
-        <style>@page{size:210mm 297mm;margin:0}</style>
-        </head><body>
-        ${node.outerHTML}
-        </body></html>`);
-      doc.close();
-
-      const win = iframe.contentWindow as Window;
-      const onLoadAndPrint = () => {
+      // Extract CSS rules
+      styleSheets.forEach((sheet) => {
         try {
-          win.focus();
-          win.print();
-        } finally {
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
+          if (sheet.href) {
+            // External stylesheet
+            allStyles += `@import url("${sheet.href}");\n`;
+          } else if (sheet.cssRules) {
+            // Inline styles
+            Array.from(sheet.cssRules).forEach((rule) => {
+              allStyles += rule.cssText + "\n";
+            });
+          }
+        } catch (e) {
+          // Skip if can't access stylesheet (CORS)
+          console.warn("Could not access stylesheet:", sheet);
         }
+      });
+
+      // Also get inline styles from style elements
+      const styleElements = Array.from(document.querySelectorAll("style"));
+      styleElements.forEach((styleEl) => {
+        allStyles += styleEl.textContent || "";
+      });
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>${fileName}</title>
+            <meta name="title" content="${fileName}">
+            <meta property="og:title" content="${fileName}">
+            <style>
+              ${allStyles}
+              
+              @page { 
+                size: A4; 
+                margin: 0; 
+              }
+              
+              body { 
+                margin: 0; 
+                padding: 0;
+                font-family: system-ui, -apple-system, sans-serif;
+                background: white;
+              }
+              
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+            </style>
+          </head>
+          <body>
+            ${node.outerHTML}
+          </body>
+        </html>
+      `;
+
+      iframeDoc.open();
+      iframeDoc.write(htmlContent);
+      iframeDoc.close();
+
+      // Wait for content to load
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            const iframeWindow = iframe.contentWindow;
+            if (iframeWindow) {
+              // Set the iframe document title as well
+              if (iframeWindow.document) {
+                iframeWindow.document.title = fileName;
+              }
+              iframeWindow.focus();
+              iframeWindow.print();
+            }
+          } catch (printError) {
+            console.error("Iframe print failed:", printError);
+          } finally {
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+              setIsProcessing(false);
+            }, 1000);
+          }
+        }, 500);
       };
 
-      setTimeout(onLoadAndPrint, 300);
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Hidden iframe print failed:", error);
+      setIsProcessing(false);
       return false;
     }
-  }, [targetRef]);
+  }, [targetRef, fileName]);
 
-  const handlePrint = useReactToPrint({
-    // @ts-ignore
-    contentRef: () => targetRef.current,
-    documentTitle: "resume",
-    removeAfterPrint: true,
-    pageStyle: `@page { size: 210mm 297mm; margin: 0; }`,
-    onPrintError: () => {
-      if (!didErrorRef.current) {
-        didErrorRef.current = true;
-        const okWin = openWindowPrint();
-        if (!okWin) {
-          const okIframe = fallbackIframePrint();
-          if (!okIframe) window.print();
+  // Method 3: Simple fallback with better filename handling
+  const printSimple = useCallback(() => {
+    const originalTitle = document.title;
+
+    // Set document title with .pdf extension for better recognition
+    document.title = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
+
+    // Also try setting the page title meta tag
+    let titleMeta = document.querySelector('meta[name="title"]');
+    let originalTitleMeta = "";
+
+    if (!titleMeta) {
+      titleMeta = document.createElement("meta");
+      titleMeta.setAttribute("name", "title");
+      document.head.appendChild(titleMeta);
+    } else {
+      originalTitleMeta = titleMeta.getAttribute("content") || "";
+    }
+
+    titleMeta.setAttribute("content", document.title);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.title = originalTitle;
+        if (originalTitleMeta) {
+          titleMeta?.setAttribute("content", originalTitleMeta);
+        } else {
+          titleMeta?.remove();
         }
-      }
-    },
-  });
+        setIsProcessing(false);
+      }, 1000);
+    }, 100);
+  }, [fileName]);
 
   const onClick = useCallback(() => {
     if (!targetRef.current) return;
-    didErrorRef.current = false;
 
-    // Prefer robust new-window path first
-    const okWin = openWindowPrint();
-    if (okWin) return;
+    // Try iframe method first (more reliable)
+    const iframeSuccess = printWithHiddenIframe();
+    if (iframeSuccess) return;
 
-    // Fallback to react-to-print
-    if (typeof handlePrint === "function") {
-      handlePrint();
-      return;
-    }
+    // Fallback to same page
+    const samePageSuccess = printOnSamePage();
+    if (samePageSuccess) return;
 
-    // Then iframe
-    const okIframe = fallbackIframePrint();
-    if (!okIframe) window.print();
-  }, [handlePrint, openWindowPrint, fallbackIframePrint, targetRef]);
+    // Last resort
+    printSimple();
+  }, [printWithHiddenIframe, printOnSamePage, printSimple, targetRef]);
 
   return (
     <Button
       className="no-print"
       onClick={onClick}
       variant="default"
+      disabled={isProcessing}
       data-pdf-button
     >
-      Download PDF
+      {isProcessing ? "Opening Print Dialog..." : "Download PDF"}
     </Button>
   );
 }
